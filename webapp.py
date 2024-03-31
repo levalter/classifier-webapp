@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 from torchvision import *
 from torch import *
 import torch.nn as nn
+from utils import set_page_bg, predict
 
 class net(nn.Module):
     def __init__(self):
@@ -18,6 +19,9 @@ class net(nn.Module):
       return self.pretrained_model(x)
 
 
+set_page_bg('./backgrounds/bg3.png')
+
+
 st.write('''<style>
             body{
             text-align:center;
@@ -28,12 +32,6 @@ st.write('''<style>
             </style>''', unsafe_allow_html=True)
 
 st.title('Central Asian Food Detector')
-
-
-transform = transforms.Compose([transforms.Resize((380,380)),
-                                transforms.ToTensor(),
-                                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-                                ])
 
 
 # Load the model
@@ -60,13 +58,8 @@ if uploaded_file != None:
     image = Image.open(uploaded_file).convert('RGB')
     image = image.filter(ImageFilter.MedianFilter)
     st.image(image)
-    image = transform(image).view(1,3,380,380)
+    label, conf = predict(image, model, labels) 
 
-    pred  = model.forward(image)
-    prob, idx = torch.max(torch.sigmoid(pred), dim = 1)
-    prob = prob.detach().numpy()[0]
-    idx = idx.numpy()[0]    
-
-    st.text(f'class {labels[idx]}')
-    st.write('confidence {:0.3f}'.format(float(prob)))
+    st.text(f'class {label}')
+    st.text('confidence {:0.3f}'.format(float(conf)))
 
